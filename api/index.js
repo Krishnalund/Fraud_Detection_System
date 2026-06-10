@@ -1,5 +1,3 @@
-// Look one folder up (in the root) for App.js
-const app = require('../App'); 
+const app = require("../app");
 
-// Export it for Vercel
 module.exports = app;
