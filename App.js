@@ -19,7 +19,7 @@ app.use(cors({
 }));
 
 app.use(express.json());
-
+app.use(express.urlencoded({ extended: true }));
 // ─── User Schema ──────────────────────────────────────────
 // This stores each registered user in the database
 const userSchema = new mongoose.Schema({
@@ -268,5 +268,8 @@ app.get("/node-stats", verifyToken, verifyAdmin, async (req, res) => {
     const stats = await Transaction.aggregate([{ $group: { _id: "$serverNode", count: { $sum: 1 } } }]);
     res.json(stats);
   } catch (e) { res.status(500).send(e); }
+});
+app.get("/", (req, res) => {
+  res.send("Fraud Detection API Running 🚀");
 });
 module.exports = app;
