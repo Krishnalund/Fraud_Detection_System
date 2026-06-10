@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-
+import BASE_URL from "./config";
 const RISK_CONFIG = {
   High:   { bg: "#FCEBEB", color: "#791F1F", accent: "#E24B4A" },
   Medium: { bg: "#FAEEDA", color: "#633806", accent: "#EF9F27" },
@@ -48,7 +48,7 @@ export default function History() {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get("http://localhost:5000/transactions", {
+      const res = await axios.get(`${BASE_URL}/transactions`, {
   headers: { Authorization: `Bearer ${token}` }
 });
       setTransactions(res.data);

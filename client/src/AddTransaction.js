@@ -1,6 +1,6 @@
 import axios from "axios";
 import React, { useState } from "react";
-
+import BASE_URL from "./config";
 const RISK_CONFIG = {
   High:   { bg: "#FCEBEB", color: "#791F1F", accent: "#E24B4A" },
   Medium: { bg: "#FAEEDA", color: "#633806", accent: "#EF9F27" },
@@ -145,7 +145,7 @@ export default function AddTransaction() {
     setResult(null);
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.post("http://localhost:5000/add-transaction", {
+      const res = await axios.post(`${BASE_URL}/transactions`, {
         sender:          form.sender.trim(),
         receiver:        form.receiver.trim(),
         amount:          Number(form.amount),

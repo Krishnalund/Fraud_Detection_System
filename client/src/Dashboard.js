@@ -1,3 +1,4 @@
+import BASE_URL from "./config";
 import jsPDF from "jspdf";
 import React, { useEffect, useState } from "react";
 import axios from "axios";
@@ -78,11 +79,11 @@ export default function Dashboard() {
       const token = localStorage.getItem("token");
       const headers = { Authorization: `Bearer ${token}` };
       const [transRes, totalRes, fraudRes, alertRes, nodeRes] = await Promise.all([
-        axios.get("http://localhost:5000/transactions",          { headers }),
-        axios.get("http://localhost:5000/total-transactions",          { headers }),
-        axios.get("http://localhost:5000/total-frauds",          { headers }),
-        axios.get("http://localhost:5000/alerts",          { headers }),
-        axios.get("http://localhost:5000/node-stats",          { headers }),
+        axios.get(`${BASE_URL}/transactions`,          { headers }),
+        axios.get(`${BASE_URL}/transactions`,          { headers }),
+        axios.get(`${BASE_URL}/transactions`,          { headers }),
+        axios.get(`${BASE_URL}/transactions`,          { headers }),
+        axios.get(`${BASE_URL}/transactions`,          { headers }),
       ]);
       setTransactions(transRes.data);
       setTotal(totalRes.data.totalTransactions);

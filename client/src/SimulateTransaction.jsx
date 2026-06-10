@@ -1,6 +1,6 @@
 import axios from "axios";
 import React, { useState } from "react";
-
+import BASE_URL from "./config";
 const NAMES = ["Ali", "Sara", "Ahmed", "John", "Ayesha", "David", "Zara", "Omar", "Fatima", "Chris"];
 
 const RISK_CONFIG = {
@@ -86,7 +86,7 @@ export default function SimulateTransaction() {
     setResult(null);
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.post("http://localhost:5000/simulate-transaction", {
+      const res = await axios.post(`${BASE_URL}/transactions`, {
         sender: sender.trim(),
         receiver: receiver.trim(),
         amount: Number(amount),
