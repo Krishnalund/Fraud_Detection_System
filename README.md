@@ -23,15 +23,16 @@ A full-stack web application that detects and monitors fraudulent transactions i
 ---
 
 ## 🧠 How Risk Scoring Works
-
 | Condition           | Risk Points Added |
+|---|---|
 | Amount > 50,000 PKR | +50 points        |
 | Amount > 20,000 PKR | +20 points        |
 | Unknown Device      | +25 points        |
 | Foreign Location    | +25 points        |
+ 
 
 | Total Score | Risk Level | Fraud? |
-
+|---|---|
 | 70+         | 🔴 High    | Yes    |
 | 30–69       | 🟡 Medium  | No     |
 | 0–29        | 🟢 Low     | No     |
@@ -58,6 +59,7 @@ A full-stack web application that detects and monitors fraudulent transactions i
 ---
 
 ## 📁 Project Structure
+```
 Fraud_Detection_System/
 ├── client/                  # React Frontend
 │   ├── public/
@@ -74,10 +76,11 @@ Fraud_Detection_System/
 ├── server.js                       # Express backend
 ├── package.json
 └── .env                            # Environment variables (not in repo)
-
+```
 ---
 
 ### 1. Clone the repository
+
 git clone https://github.com/Krishnalund/Fraud_Detection_System.git
 cd Fraud_Detection_System
 
@@ -110,7 +113,8 @@ http://localhost:3000
 
 ## 👤 Default Roles
 
-| Role      | Access                                                      |
+| Role      | Access  
+|---|---|                                                    |
 | **User**  | Register, Login, Submit transactions, View own history      |
 | **Admin** | Full dashboard, View all transactions, Generate PDF reports |
 
@@ -119,14 +123,15 @@ http://localhost:3000
 ---
 
 ## 🌐 API Endpoints
-
 ### Auth
 | Method    | Endpoint       | Description         |
+|---|---|
 | POST      | `/register`    | Create new account  |
 | POST      | `/login`       | Login and get token |
 
 ### Transactions (Protected)
 | Method | Endpoint                  | Access                |
+|---|---|
 | GET    | `/transactions`           | Admin: all, User: own |
 | POST   | `/add-transaction`        | Any logged in user    |
 | POST   | `/simulate-transaction`   | Any logged in user    |
