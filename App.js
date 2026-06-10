@@ -1,282 +1,213 @@
-console.log("App starting...");
-console.log("MONGO_URI exists:", !!process.env.MONGO_URI);
-require("dotenv").config(); // load .env file
+require("dotenv").config();
+
 const express = require("express");
-const mongoose = require("mongoose");
 const cors = require("cors");
-const bcrypt = require("bcryptjs");       // for hashing passwords
-const jwt = require("jsonwebtoken");      // for creating tokens
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 
 const app = express();
-const PORT = process.env.PORT || 5000;
-const JWT_SECRET = process.env.JWT_SECRET;
 
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB Connected"))
-  .catch((err) => {
-    console.error("MongoDB connection error:", err.message);
-  });
+/* ─────────────────────────────────────
+   ENV CHECK (IMPORTANT)
+───────────────────────────────────── */
+if (!process.env.MONGO_URI) {
+  throw new Error("MONGO_URI missing");
+}
 
-app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST"],
-}));
+if (!process.env.JWT_SECRET) {
+  throw new Error("JWT_SECRET missing");
+}
 
+/* ─────────────────────────────────────
+   DB CONNECTION (SAFE FOR VERCEL)
+───────────────────────────────────── */
+const connectDB = async () => {
+  if (mongoose.connection.readyState === 1) return;
+
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log("MongoDB Connected");
+  } catch (err) {
+    console.log("MongoDB error:", err.message);
+  }
+};
+
+// connect once per cold start
+connectDB();
+
+/* ─────────────────────────────────────
+   MIDDLEWARE
+───────────────────────────────────── */
+app.use(cors({ origin: "*", methods: ["GET", "POST"] }));
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-// ─── User Schema ──────────────────────────────────────────
-// This stores each registered user in the database
-const userSchema = new mongoose.Schema({
-  name:      { type: String, required: true },
-  email:     { type: String, required: true, unique: true },  // no duplicate emails
-  password:  { type: String, required: true },                // hashed, never plain text
-  role:      { type: String, default: "user" },               // "user" or "admin"
-});
 
-const User = mongoose.model("User", userSchema);
+/* ─────────────────────────────────────
+   MODELS
+───────────────────────────────────── */
+const User = require("./models/User");
+const Transaction = require("./models/Transaction");
 
-// ─── Transaction Schema ───────────────────────────────────
-const transactionSchema = new mongoose.Schema({
-  sender:          String,
-  receiver:        String,
-  amount:          Number,
-  location:        String,
-  device:          String,
-  ipAddress:       String,
-  transactionTime: String,
-  isFraud:         Boolean,
-  riskLevel:       String,
-  riskScore:       Number,
-  aiExplanation:   [String],
-  serverNode:      String,
-  userId:          { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // who submitted this
-});
-
-const Transaction = mongoose.model("Transaction", transactionSchema);
-
-// ─── Fraud Logic ──────────────────────────────────────────
+/* ─────────────────────────────────────
+   FRAUD LOGIC
+───────────────────────────────────── */
 function calculateRisk({ amount, device, location }) {
-  let score   = 0;
+  let score = 0;
   let reasons = [];
 
   if (amount > 50000) {
     score += 50;
-    reasons.push("Amount exceeds 50,000 — high-value transfer");
+    reasons.push("High amount transfer");
   } else if (amount > 20000) {
     score += 20;
-    reasons.push("Amount exceeds 20,000 — medium-value transfer");
   }
 
   if (device === "Unknown") {
     score += 25;
-    reasons.push("Unknown device used — unrecognized access point");
+    reasons.push("Unknown device");
   }
 
   if (location === "Foreign") {
     score += 25;
-    reasons.push("Foreign location detected — transaction origin outside Pakistan");
+    reasons.push("Foreign location");
   }
 
-  let riskLevel;
-  let isFraud;
+  let riskLevel = "Low";
+  let isFraud = false;
 
   if (score >= 70) {
-    isFraud   = true;
     riskLevel = "High";
+    isFraud = true;
   } else if (score >= 30) {
-    isFraud   = false;
     riskLevel = "Medium";
-  } else {
-    isFraud   = false;
-    riskLevel = "Low";
   }
 
   return { score, reasons, isFraud, riskLevel };
 }
 
-const NODES = ["Karachi-Node", "Lahore-Node", "Islamabad-Node"];
-const pick  = (arr) => arr[Math.floor(Math.random() * arr.length)];
-
-// ─── Auth Middleware ──────────────────────────────────────
-// This function runs BEFORE protected routes
-// It checks if the request has a valid token
+/* ─────────────────────────────────────
+   AUTH MIDDLEWARE
+───────────────────────────────────── */
 function verifyToken(req, res, next) {
-  // Token comes in the request header like: Authorization: Bearer <token>
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1]; // extract the token part
+  const token = req.headers["authorization"]?.split(" ")[1];
 
   if (!token) {
-    return res.status(401).json({ message: "Access denied. Please login first." });
+    return res.status(401).json({ message: "Login required" });
   }
 
   try {
-    // jwt.verify checks if token is valid and not expired
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded; // attach user info to the request
-    next();             // move to the actual route
-  } catch (err) {
-    return res.status(403).json({ message: "Invalid or expired token. Please login again." });
+    req.user = jwt.verify(token, process.env.JWT_SECRET);
+    next();
+  } catch {
+    return res.status(403).json({ message: "Invalid token" });
   }
 }
 
-// Admin-only middleware — runs after verifyToken
 function verifyAdmin(req, res, next) {
   if (req.user.role !== "admin") {
-    return res.status(403).json({ message: "Access denied. Admins only." });
+    return res.status(403).json({ message: "Admins only" });
   }
   next();
 }
 
-// ─── Auth Routes ──────────────────────────────────────────
+/* ─────────────────────────────────────
+   ROUTES
+───────────────────────────────────── */
 
-// REGISTER — anyone can create an account
+// TEST ROUTE
+app.get("/", (req, res) => {
+  res.json({ message: "FraudGuard API Working 🚀" });
+});
+
+/* ───────── REGISTER ───────── */
 app.post("/register", async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    // Check if email already exists
-    const existing = await User.findOne({ email });
-    if (existing) {
-      return res.status(400).json({ message: "Email already registered. Please login." });
-    }
+    const exists = await User.findOne({ email });
+    if (exists) return res.status(400).json({ message: "User exists" });
 
-    // Hash the password before saving (10 = how strong the hash is)
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashed = await bcrypt.hash(password, 10);
 
-    const user = await new User({
-      name,
-      email,
-      password: hashedPassword,
-      role: "user", // everyone starts as a regular user
-    }).save();
+    await User.create({ name, email, password: hashed, role: "user" });
 
-    res.json({ message: "Account created successfully! Please login." });
+    res.json({ message: "Registered successfully" });
   } catch (err) {
-    res.status(500).json({ message: "Registration failed.", error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 
-// LOGIN — check email + password, return token
+/* ───────── LOGIN ───────── */
 app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Find user by email
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ message: "No account found with this email." });
-    }
+    if (!user) return res.status(400).json({ message: "User not found" });
 
-    // Compare entered password with hashed password in DB
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: "Incorrect password." });
-    }
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return res.status(400).json({ message: "Wrong password" });
 
-    // Create a token — contains user id, name, role
-    // expires in 7 days — user stays logged in for 7 days
     const token = jwt.sign(
-      { id: user._id, name: user.name, role: user.role },
-      JWT_SECRET,
+      { id: user._id, role: user.role, name: user.name },
+      process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
 
-    res.json({
-      message: "Login successful!",
-      token,
-      user: { name: user.name, email: user.email, role: user.role },
-    });
+    res.json({ token, user });
   } catch (err) {
-    res.status(500).json({ message: "Login failed.", error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 
-// ─── Protected Transaction Routes ─────────────────────────
-app.get("/", (req, res) => res.send("Fraud Detection Server Running"));
-
-// Add transaction — any logged in user can submit
+/* ───────── ADD TRANSACTION ───────── */
 app.post("/add-transaction", verifyToken, async (req, res) => {
   try {
-    const { sender, receiver, amount, location, device, ipAddress, transactionTime } = req.body;
-    const { score, reasons, isFraud, riskLevel } = calculateRisk({ amount, device, location });
+    const { sender, receiver, amount, location, device } = req.body;
 
-    const tx = await new Transaction({
-      sender, receiver, amount, location, device, ipAddress, transactionTime,
-      serverNode: pick(NODES),
-      isFraud, riskLevel, riskScore: score, aiExplanation: reasons,
-      userId: req.user.id, // save who submitted this transaction
-    }).save();
+    const { score, reasons, isFraud, riskLevel } =
+      calculateRisk({ amount, device, location });
 
-    res.json({ message: "Transaction Saved", fraudDetected: isFraud, riskLevel, riskScore: score, reasons });
-  } catch (err) {
-    res.status(500).send(err);
-  }
-});
-
-// Simulate — any logged in user
-app.post("/simulate-transaction", verifyToken, async (req, res) => {
-  try {
-    const { sender, receiver, amount } = req.body;
-
-    const device   = pick(["Mobile", "Desktop", "Unknown"]);
-    const location = pick(["Local", "Foreign"]);
-    const ipAddress = `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`;
-    const transactionTime = new Date().toISOString();
-    const serverNode = pick(NODES);
-
-    const { score, reasons, isFraud, riskLevel } = calculateRisk({ amount, device, location });
-
-    await new Transaction({
-      sender, receiver, amount, location, device, ipAddress, transactionTime,
-      serverNode, isFraud, riskLevel, riskScore: score, aiExplanation: reasons,
+    const tx = await Transaction.create({
+      sender,
+      receiver,
+      amount,
+      location,
+      device,
+      isFraud,
+      riskLevel,
+      riskScore: score,
+      aiExplanation: reasons,
       userId: req.user.id,
-    }).save();
-
-    res.json({
-      message: "Simulation complete",
-      transaction: {
-        sender, receiver, amount, location, device, serverNode,
-        isFraud, riskLevel, riskScore: score, aiExplanation: reasons,
-      },
     });
+
+    res.json({ message: "Saved", tx });
   } catch (err) {
-    res.status(500).send(err);
+    res.status(500).json({ error: err.message });
   }
 });
 
-// USER: see only their own transactions
+/* ───────── GET TRANSACTIONS ───────── */
 app.get("/transactions", verifyToken, async (req, res) => {
-  try {
-    // admin sees all, user sees only their own
-    const filter = req.user.role === "admin" ? {} : { userId: req.user.id };
-    res.json(await Transaction.find(filter));
-  } catch (e) { res.status(500).send(e); }
+  const filter =
+    req.user.role === "admin" ? {} : { userId: req.user.id };
+
+  const data = await Transaction.find(filter);
+  res.json(data);
 });
 
-// ADMIN ONLY routes — dashboard stats
-app.get("/frauds",                verifyToken, verifyAdmin, async (req, res) => { try { res.json(await Transaction.find({ isFraud: true })); } catch (e) { res.status(500).send(e); } });
-app.get("/safe-transactions",     verifyToken, verifyAdmin, async (req, res) => { try { res.json(await Transaction.find({ isFraud: false })); } catch (e) { res.status(500).send(e); } });
-app.get("/high-risk-transactions",verifyToken, verifyAdmin, async (req, res) => { try { res.json(await Transaction.find({ riskLevel: "High" })); } catch (e) { res.status(500).send(e); } });
-app.get("/alerts",                verifyToken, verifyAdmin, async (req, res) => { try { res.json(await Transaction.find({ isFraud: true })); } catch (e) { res.status(500).send(e); } });
+/* ───────── ADMIN ROUTES ───────── */
+app.get("/frauds", verifyToken, verifyAdmin, async (req, res) => {
+  res.json(await Transaction.find({ isFraud: true }));
+});
 
 app.get("/total-transactions", verifyToken, verifyAdmin, async (req, res) => {
-  try { res.json({ totalTransactions: await Transaction.countDocuments() }); } catch (e) { res.status(500).send(e); }
+  res.json({ total: await Transaction.countDocuments() });
 });
 
 app.get("/total-frauds", verifyToken, verifyAdmin, async (req, res) => {
-  try { res.json({ totalFrauds: await Transaction.countDocuments({ isFraud: true }) }); } catch (e) { res.status(500).send(e); }
+  res.json({ total: await Transaction.countDocuments({ isFraud: true }) });
 });
 
-app.get("/node-stats", verifyToken, verifyAdmin, async (req, res) => {
-  try {
-    const stats = await Transaction.aggregate([{ $group: { _id: "$serverNode", count: { $sum: 1 } } }]);
-    res.json(stats);
-  } catch (e) { res.status(500).send(e); }
-});
-app.get("/", (req, res) => {
-  res.send("Fraud Detection API Running 🚀");
-});
-app.get("/", (req, res) => {
-  res.json({ message: "Backend Working 🚀" });
-});
+/* ───────────────────────────────────── */
 module.exports = app;
