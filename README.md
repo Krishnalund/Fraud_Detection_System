@@ -31,7 +31,7 @@ A full-stack web application that detects and monitors fraudulent transactions i
 | Foreign Location    | +25 points        |
  
 
-| Total Score | Risk Level | Fraud? |
+| Total Score | Risk Level  | Fraud? |
 |---|---|
 | 70+         | 🔴 High    | Yes    |
 | 30–69       | 🟡 Medium  | No     |
@@ -114,7 +114,7 @@ http://localhost:3000
 ## 👤 Default Roles
 
 | Role      | Access  
-|---|---|                                                    |
+|---|---|                                                                 |
 | **User**  | Register, Login, Submit transactions, View own history      |
 | **Admin** | Full dashboard, View all transactions, Generate PDF reports |
 
