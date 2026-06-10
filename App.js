@@ -1,3 +1,5 @@
+console.log("App starting...");
+console.log("MONGO_URI exists:", !!process.env.MONGO_URI);
 require("dotenv").config(); // load .env file
 const express = require("express");
 const mongoose = require("mongoose");
@@ -10,8 +12,10 @@ const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET;
 
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB Atlas Connected ✓"))
-  .catch((err) => console.log(err));
+  .then(() => console.log("MongoDB Connected"))
+  .catch((err) => {
+    console.error("MongoDB connection error:", err.message);
+  });
 
 app.use(cors({
   origin: "*",
@@ -271,5 +275,8 @@ app.get("/node-stats", verifyToken, verifyAdmin, async (req, res) => {
 });
 app.get("/", (req, res) => {
   res.send("Fraud Detection API Running 🚀");
+});
+app.get("/", (req, res) => {
+  res.json({ message: "Backend Working 🚀" });
 });
 module.exports = app;
