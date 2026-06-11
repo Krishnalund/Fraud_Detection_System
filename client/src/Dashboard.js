@@ -78,18 +78,17 @@ export default function Dashboard() {
     try {
       const token = localStorage.getItem("token");
       const headers = { Authorization: `Bearer ${token}` };
-      const [transRes, totalRes, fraudRes, alertRes, nodeRes] = await Promise.all([
-        axios.get(`${BASE_URL}/transactions`,          { headers }),
-        axios.get(`${BASE_URL}/transactions`,          { headers }),
-        axios.get(`${BASE_URL}/transactions`,          { headers }),
-        axios.get(`${BASE_URL}/transactions`,          { headers }),
-        axios.get(`${BASE_URL}/transactions`,          { headers }),
-      ]);
-      setTransactions(transRes.data);
-      setTotal(totalRes.data.totalTransactions);
-      setFrauds(fraudRes.data.totalFrauds);
-      setAlerts(alertRes.data);
-      setNodeStats(nodeRes.data);
+      const [transRes, totalRes, fraudRes] = await Promise.all([
+      axios.get(`${BASE_URL}/transactions`, { headers }),
+      axios.get(`${BASE_URL}/total-transactions`, { headers }),
+      axios.get(`${BASE_URL}/total-frauds`, { headers }),
+]);
+      const txData = transRes.data;
+      setTransactions(txData);
+      setTotal(totalRes.data.total);
+      setFrauds(fraudRes.data.total);
+      setAlerts(txData.filter(t => t.isFraud));
+      setNodeStats([]);
       setLastUpdated(new Date());
     } catch (error) {
       console.log(error);
