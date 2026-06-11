@@ -10,7 +10,7 @@ const RISK_CONFIG = {
   Low:    { bg: "#EAF3DE", color: "#27500A", accent: "#1D9E75", bar: "#1D9E75" },
 };
 
-function Field({ label, value, onChange, type = "text", placeholder }) {
+function Field({ label, value, onChange, type = "text", placeholder }) { 
   return (
     <div style={{ marginBottom: "16px" }}>
       <label style={{
