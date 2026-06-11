@@ -178,11 +178,13 @@ http://localhost:3000
 
 ---
 
-## 📦 Deployment
+### Deployment
 
-- **Frontend** — Vercel
-- **Backend** — Vercel (Serverless Functions)
-- **Database** — MongoDB Atlas
+- Frontend deployed on Vercel
+- Backend deployed on Vercel Serverless Functions
+- MongoDB Atlas used as cloud database
+- app.js serves as the Vercel entry point
+- index.js is used for local development
 
 ---
 

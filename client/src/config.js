@@ -1,2 +1,2 @@
-const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const BASE_URL = "https://transact-guard-backend.vercel.app";
 export default BASE_URL;
