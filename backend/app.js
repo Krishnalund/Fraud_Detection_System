@@ -11,12 +11,6 @@ const adminRoutes = require("./routes/adminRoutes");
 const app = express();
 
 /* ─────────────────────────────────────
-   ENV CHECK
-───────────────────────────────────── */
-if (!process.env.MONGO_URI) throw new Error("MONGO_URI missing");
-if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET missing");
-
-/* ─────────────────────────────────────
    DB CONNECTION
 ───────────────────────────────────── */
 const connectDB = async () => {
@@ -38,14 +32,12 @@ connectDB();
    MIDDLEWARE
 ───────────────────────────────────── */
 app.use(cors({
-  
-  origin: ['https://transact-guard-frontend.vercel.app'], 
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 }));
 
-app.options('*', cors());
+app.options("*", cors());
 app.use(express.json());
 
 /* ─────────────────────────────────────
