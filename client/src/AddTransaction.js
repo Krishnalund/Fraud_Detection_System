@@ -145,7 +145,7 @@ export default function AddTransaction() {
     setResult(null);
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.post(`${BASE_URL}/transactions`, {
+      const res = await axios.post(`${BASE_URL}/add-transaction`, {
         sender:          form.sender.trim(),
         receiver:        form.receiver.trim(),
         amount:          Number(form.amount),
@@ -154,7 +154,7 @@ export default function AddTransaction() {
         ipAddress:       form.ipAddress.trim(),
         transactionTime: new Date(form.transactionTime).toISOString(),
       }, { headers: { Authorization: `Bearer ${token}` } });
-      setResult(res.data);
+      setResult(res.data.tx);
       setSubmitted(true);
     } catch (e) {
       setError("Could not connect to server. Make sure the backend is running on port 5000.");
