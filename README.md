@@ -23,13 +23,13 @@ A full-stack web application that detects and monitors fraudulent transactions i
 ---
 
 ## 🧠 How Risk Scoring Works
+
 | Condition           | Risk Points Added |
 |---|---|
 | Amount > 50,000 PKR | +50 points        |
 | Amount > 20,000 PKR | +20 points        |
 | Unknown Device      | +25 points        |
 | Foreign Location    | +25 points        |
- 
 
 | Total Score | Risk Level  | Fraud? |
 |---|---|---|
@@ -50,8 +50,8 @@ A full-stack web application that detects and monitors fraudulent transactions i
 
 ### Backend
 - Node.js
-- Express.js
-- MongoDB + Mongoose
+- Express.js (Serverless — deployed on Vercel)
+- MongoDB Atlas + Mongoose
 - JWT (jsonwebtoken)
 - bcryptjs
 - dotenv
@@ -59,9 +59,33 @@ A full-stack web application that detects and monitors fraudulent transactions i
 ---
 
 ## 📁 Project Structure
-```
 Fraud_Detection_System/
-├── client/                  # React Frontend
+├── backend/                        # Node.js + Express Backend (Serverless)
+│   ├── config/
+│   │   ├── db.js                   # MongoDB connection
+│   │   ├── env.js                  # Environment variables
+│   │   └── mlModel.js              # ML model config
+│   ├── controllers/
+│   │   ├── authController.js       # Register & Login logic
+│   │   ├── transactionController.js# Transaction & fraud scoring logic
+│   │   └── adminController.js      # Admin stats & fraud data
+│   ├── middleware/
+│   │   └── auth.js                 # JWT verify & admin guard
+│   ├── models/
+│   │   ├── User.js                 # User schema
+│   │   └── Transaction.js          # Transaction schema
+│   ├── routes/
+│   │   ├── authRoutes.js           # /register /login
+│   │   ├── transactionRoutes.js    # /add-transaction /transactions
+│   │   └── adminRoutes.js          # /frauds /total-transactions /total-frauds
+│   ├── services/                   # Business logic services
+│   ├── uploads/                    # Uploaded files
+│   ├── utils/                      # Helper functions
+│   ├── app.js                      # Express app (Vercel entry point)
+│   ├── index.js                    # Local development server
+│   ├── vercel.json                 # Vercel deployment config
+│   └── .env                        # Environment variables (not in repo)
+├── client/                         # React Frontend
 │   ├── public/
 │   └── src/
 │       ├── App.js                  # Routes
@@ -73,73 +97,74 @@ Fraud_Detection_System/
 │       ├── SimulateTransaction.js  # Transaction simulator
 │       ├── AddTransaction.js       # Manual transaction form
 │       └── ProtectedRoute.js       # Route protection
-├── server.js                       # Express backend
-├── package.json
-└── .env                            # Environment variables (not in repo)
-```
+├── .gitignore
+└── README.md
+
 ---
 
-### 1. Clone the repository
+## ⚙️ Getting Started
 
+### 1. Clone the repository
 git clone https://github.com/Krishnalund/Fraud_Detection_System.git
 cd Fraud_Detection_System
 
-
 ### 2. Install backend dependencies
+cd backend
 npm install
-
 
 ### 3. Install frontend dependencies
-cd client
+cd ../client
 npm install
 
-
-### 4. Create `.env` file in root folder
-MONGO_URI=mongodb://127.0.0.1:27017/fraudDB
+### 4. Create `.env` file inside `backend/` folder
+MONGO_URI=your_mongodb_atlas_connection_string
 JWT_SECRET=your_secret_key_here
 PORT=5000
 
 ### 5. Run the backend
-cd ..
-node server.js
+cd ../backend
+node index.js
 
 ### 6. Run the frontend
-cd client
+cd ../client
 npm start
 
 ### 7. Open in browser
 http://localhost:3000
 
+---
 
 ## 👤 Default Roles
 
-| Role      | Access  
-|---|---|                                                            
-| **User**  | Register, Login, Submit transactions, View own history      |
-| **Admin** | Full dashboard, View all transactions, Generate PDF reports |
+| Role      | Access                                                        |
+|---|---|
+| **User**  | Register, Login, Submit transactions, View own history        |
+| **Admin** | Full dashboard, View all transactions, Generate PDF reports   |
 
-> To make yourself admin: Open MongoDB Compass → `fraudDB` → `users` → change `role` from `"user"` to `"admin"`
+> To make yourself admin: Go to MongoDB Atlas → Data Explorer → `fraud_detection` → `users` → change `role` from `"user"` to `"admin"`
 
 ---
 
 ## 🌐 API Endpoints
+
 ### Auth
-| Method    | Endpoint       | Description         |
+| Method | Endpoint    | Description         |
 |---|---|---|
-| POST      | `/register`    | Create new account  |
-| POST      | `/login`       | Login and get token |
+| POST   | `/register` | Create new account  |
+| POST   | `/login`    | Login and get token |
 
 ### Transactions (Protected)
-| Method | Endpoint                  | Access                |
+| Method | Endpoint           | Access                |
 |---|---|---|
-| GET    | `/transactions`           | Admin: all, User: own |
-| POST   | `/add-transaction`        | Any logged in user    |
-| POST   | `/simulate-transaction`   | Any logged in user    |
-| GET    | `/frauds`                 | Admin only            |
-| GET    | `/high-risk-transactions` | Admin only            |
-| GET    | `/total-transactions`     | Admin only            |
-| GET    | `/total-frauds`           | Admin only            |
-| GET    | `/node-stats`             | Admin only            |
+| GET    | `/transactions`    | Admin: all, User: own |
+| POST   | `/add-transaction` | Any logged in user    |
+
+### Admin Only
+| Method | Endpoint               | Description            |
+|---|---|---|
+| GET    | `/frauds`              | Get all fraud cases    |
+| GET    | `/total-transactions`  | Total transaction count|
+| GET    | `/total-frauds`        | Total fraud count      |
 
 ---
 
@@ -156,7 +181,7 @@ http://localhost:3000
 ## 📦 Deployment
 
 - **Frontend** — Vercel
-- **Backend** — Render
+- **Backend** — Vercel (Serverless Functions)
 - **Database** — MongoDB Atlas
 
 ---
