@@ -5,7 +5,7 @@ A full-stack web application that detects and monitors fraudulent transactions i
 ---
 
 ## 🚀 Live Demo
-> Coming soon after deployment
+https://transact-guard-frontend.vercel.app/
 
 ---
 
@@ -57,7 +57,7 @@ A full-stack web application that detects and monitors fraudulent transactions i
 - dotenv
 
 ---
-
+```
 ## 📁 Project Structure
 Fraud_Detection_System/
 ├── backend/                        # Node.js + Express Backend (Serverless)
@@ -99,7 +99,7 @@ Fraud_Detection_System/
 │       └── ProtectedRoute.js       # Route protection
 ├── .gitignore
 └── README.md
-
+```
 ---
 
 ## ⚙️ Getting Started
@@ -165,6 +165,7 @@ http://localhost:3000
 | GET    | `/frauds`              | Get all fraud cases    |
 | GET    | `/total-transactions`  | Total transaction count|
 | GET    | `/total-frauds`        | Total fraud count      |
+| GET    | `/node-stats`          | Node distribution stats|
 
 ---
 
