@@ -14,31 +14,31 @@ const app = express();
    DB CONNECTION
 ───────────────────────────────────── */
 const connectDB = async () => {
-  if (mongoose.connection.readyState === 1) return;
-  try {
-    await mongoose.connect(process.env.MONGO_URI, {
-      serverSelectionTimeoutMS: 10000,
-      socketTimeoutMS: 45000,
-    });
-    console.log("MongoDB Connected");
-  } catch (err) {
-    console.log("MongoDB error:", err.message);
-  }
+  if (mongoose.connection.readyState >= 1) return;
+  return mongoose.connect(process.env.MONGO_URI, {
+    serverSelectionTimeoutMS: 30000,
+    socketTimeoutMS: 45000,
+    bufferCommands: false,
+  });
 };
-
-connectDB();
 
 /* ─────────────────────────────────────
    MIDDLEWARE
 ───────────────────────────────────── */
-app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-}));
-
+app.use(cors({ origin: "*", methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"], allowedHeaders: ["Content-Type", "Authorization"] }));
 app.options("*", cors());
 app.use(express.json());
+
+// Connect to DB before every request
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    console.error("DB connection failed:", err.message);
+    res.status(500).json({ error: "Database connection failed" });
+  }
+});
 
 /* ─────────────────────────────────────
    ROUTES
