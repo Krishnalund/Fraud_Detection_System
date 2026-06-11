@@ -38,11 +38,14 @@ connectDB();
    MIDDLEWARE
 ───────────────────────────────────── */
 app.use(cors({
-  origin: ['https://transact-guard-frontend.vercel.app/'],
+  
+  origin: ['https://transact-guard-frontend.vercel.app'], 
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
+
+app.options('*', cors());
 app.use(express.json());
 
 /* ─────────────────────────────────────
