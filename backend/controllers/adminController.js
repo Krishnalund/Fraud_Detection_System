@@ -26,3 +26,13 @@ exports.getTotalFrauds = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+exports.getNodeStats = async (req, res) => {
+  try {
+    const stats = await Transaction.aggregate([
+      { $group: { _id: "$serverNode", count: { $sum: 1 } } }
+    ]);
+    res.json(stats);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

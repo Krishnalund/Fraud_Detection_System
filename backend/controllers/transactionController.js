@@ -37,6 +37,8 @@ function calculateRisk({ amount, device, location }) {
 exports.addTransaction = async (req, res) => {
   try {
     const { sender, receiver, amount, location, device } = req.body;
+    const nodes = ["Karachi-Node", "Islamabad-Node", "Lahore-Node"];
+    const serverNode = nodes[Math.floor(Math.random() * nodes.length)];
 
     const { score, reasons, isFraud, riskLevel } =
       calculateRisk({ amount, device, location });
@@ -51,8 +53,9 @@ exports.addTransaction = async (req, res) => {
       riskLevel,
       riskScore: score,
       aiExplanation: reasons,
+      serverNode,
       userId: req.user.id,
-    });
+});
 
     res.json({ message: "Saved", tx });
   } catch (err) {
