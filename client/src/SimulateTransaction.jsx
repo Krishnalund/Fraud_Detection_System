@@ -86,12 +86,14 @@ export default function SimulateTransaction() {
     setResult(null);
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.post(`${BASE_URL}/transactions`, {
+      const res = await axios.post(`${BASE_URL}/add-transaction`, {
         sender: sender.trim(),
         receiver: receiver.trim(),
         amount: Number(amount),
+        location: "Local",
+        device: "Known",
       }, { headers: { Authorization: `Bearer ${token}` } });
-      const tx = res.data.transaction;
+      const tx = res.data.tx;
       setResult(tx);
       setHistory(prev => [tx, ...prev].slice(0, 5));
     } catch (e) {
