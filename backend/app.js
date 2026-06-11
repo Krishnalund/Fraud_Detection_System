@@ -22,7 +22,10 @@ if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET missing");
 const connectDB = async () => {
   if (mongoose.connection.readyState === 1) return;
   try {
-    await mongoose.connect(process.env.MONGO_URI);
+    await mongoose.connect(process.env.MONGO_URI, {
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+    });
     console.log("MongoDB Connected");
   } catch (err) {
     console.log("MongoDB error:", err.message);
@@ -34,7 +37,7 @@ connectDB();
 /* ─────────────────────────────────────
    MIDDLEWARE
 ───────────────────────────────────── */
-app.use(cors({ origin: "*", methods: ["GET", "POST", "PUT", "DELETE"] }));
+app.use(cors({ origin: "*", credentials: true }));
 app.use(express.json());
 
 /* ─────────────────────────────────────
