@@ -1,3 +1,4 @@
+import BASE_URL from "./config";
 import axios from "axios";
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
@@ -45,7 +46,7 @@ export default function Login() {
     setError("");
     setLoading(true);
     try {
-      const res = await axios.post("http://localhost:5000/login", { email, password });
+      const res = await axios.post(`${BASE_URL}/login`, { email, password });
 
       // ─── Save token and user info in localStorage ───────
       // This is the "wristband" — we store it so the user

@@ -1,3 +1,4 @@
+import BASE_URL from "./config";
 import axios from "axios";
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
@@ -55,7 +56,7 @@ export default function Register() {
     setError("");
     setLoading(true);
     try {
-      const res = await axios.post("http://localhost:5000/register", { name, email, password });
+      const res = await axios.post(`${BASE_URL}/register`, { name, email, password });
       setSuccess(res.data.message);
       // Redirect to login after 1.5 seconds
       setTimeout(() => navigate("/login"), 1500);
